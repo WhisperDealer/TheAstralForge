@@ -28,12 +28,21 @@ jobs:
       - name: Thumbnails
         run: pip install --quiet pillow && python scripts/make-thumbs.py
         continue-on-error: true
+      # GitHub Pages project site: served from https://<user>.github.io/<repo>/, so the build
+      # prefixes every link with /<repo> (TAF_BASEURL) and the canonical URLs use the github.io origin
+      - id: pages
+        uses: actions/configure-pages@v5
       - name: Build site
         run: npm run build
+        env:
+          TAF_BASEURL: ${{ steps.pages.outputs.base_path }}
+          TAF_URL: ${{ steps.pages.outputs.origin }}
       # Reported in the run log, never blocks a deploy (pull requests are gated by quality.yml)
       - name: Check internal links and images
         run: npm run check
         continue-on-error: true
+        env:
+          TAF_BASEURL: ${{ steps.pages.outputs.base_path }}
       - uses: actions/upload-pages-artifact@v3
         with:
           path: _site

@@ -824,7 +824,10 @@
   var fmtN = function (n, L) { return String(Math.round(n)).replace(/\B(?=(\d{3})+(?!\d))/g, (L || lang()) === 'fr' ? ' ' : ','); };
   var escH = function (s) { return String(s).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/"/g, '&quot;'); };
   var nexusUrl = function (s) { return 'https://www.nexusmods.com/' + s.replace('/', '/mods/'); };
-  var getJson = function (url) { return fetch(url).then(function (r) { if (!r.ok) throw new Error(r.status); return r.json(); }); };
+  // site root (non-empty when served from a sub-folder, e.g. GitHub Pages /<repo>/), read from the stylesheet link like the main block
+  var cssHref = (document.querySelector('link[href*="/assets/site.css"]') || { getAttribute: function () { return ''; } }).getAttribute('href') || '';
+  var base = cssHref.split('/assets/site.css')[0];
+  var getJson = function (url) { return fetch((url.charAt(0) === '/' ? base : '') + url).then(function (r) { if (!r.ok) throw new Error(r.status); return r.json(); }); };
 
   $$('[data-tmap]').forEach(function (w) {
     var map = $('.tm', w), panel = $('[data-tm-panel]', w), id = w.getAttribute('data-tmap');

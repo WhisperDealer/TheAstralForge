@@ -16,8 +16,12 @@ if (!fs.existsSync(OUT)) { console.error('_site/ not found: run npm run build fi
 const walk = (d) => fs.readdirSync(d, { withFileTypes: true }).flatMap((e) => (e.isDirectory() ? walk(path.join(d, e.name)) : [path.join(d, e.name)]));
 const pages = walk(OUT).filter((f) => f.endsWith('.html'));
 
+// A build for a sub-folder (TAF_BASEURL, GitHub Pages project site) prefixes every link with it
+const BASE = (process.env.TAF_BASEURL || '').replace(/\/$/, '');
+
 function resolves(url) {
   let p = url.split('#')[0].split('?')[0];
+  if (BASE) { if (p !== BASE && !p.startsWith(BASE + '/')) return false; p = p.slice(BASE.length) || '/'; }
   if (!p) return true;
   try { p = decodeURI(p); } catch { return false; }
   const f = path.join(OUT, p);

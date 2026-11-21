@@ -219,6 +219,19 @@ function frenchSpacing(html) {
   }).join('');
 }
 
+// Base path when the site is served from a sub-folder (GitHub Pages project site: /<repo>/).
+// Set by TAF_BASEURL in .github/workflows/pages.yml; empty for the dev server and theastralforge.com.
+let BASE = '';
+// Content and data files write root-relative links (/assets/..., /wunduniik/...): prefix them with BASE.
+// Links already built with relative_url start with BASE and are left alone.
+function withBase(html) {
+  if (!BASE) return html;
+  const fix = (u) => (u.startsWith('/') && !u.startsWith('//') && !u.startsWith(BASE + '/') && u !== BASE ? BASE + u : u);
+  return html
+    .replace(/(\s(?:href|src|action|poster|data-[\w-]+)=")(\/[^"]*)"/g, (m, a, u) => a + fix(u) + '"')
+    .replace(/(\ssrcset=")([^"]*)"/g, (m, a, v) => a + v.split(',').map((x) => x.replace(/^(\s*)(\S+)/, (_, sp, u) => sp + fix(u))).join(',') + '"');
+}
+
 function postProcessHtml(html) {
   return youtubeFacade(html)
     // external links open in a new tab
@@ -600,8 +613,12 @@ function featureRows(content, gallery, relativeUrl) {
 async function build() {
   const t0 = Date.now();
   const config = yaml.load(read('_config.yml'));
+  // GitHub Pages (pages.yml) serves the site under /<repo>/ on <user>.github.io: override both
+  if (process.env.TAF_BASEURL !== undefined) config.baseurl = process.env.TAF_BASEURL;
+  if (process.env.TAF_URL) config.url = process.env.TAF_URL;
   const baseurl = (config.baseurl || '').replace(/\/$/, '');
   const siteUrl = (config.url || '').replace(/\/$/, '');
+  BASE = baseurl;
 
   /* Data files */
   const data = {};
@@ -864,7 +881,7 @@ async function build() {
     const inner = await engine.renderFile(layoutFor(page), { ...ctx, content });
     const html = await engine.renderFile('base.liquid', { ...ctx, content: inner });
     const glossed = (modlist && !/\/(?:changelog|loadorder)\//.test(page.url)) || page.url === '/faq/' || page.url === '/hub/';
-    writeOut(urlToFile(page.url), frenchSpacing(glossed ? glossarize(html) : html));
+    writeOut(urlToFile(page.url), withBase(frenchSpacing(glossed ? glossarize(html) : html)));
 
     if (page.url !== '/404') {
       // One text per language (site.js searches the visitor's language), French title when there is one
@@ -918,7 +935,8 @@ async function build() {
     writeOut('assets/' + f, transformSync(src, { loader, minify: true, target, legalComments: 'none' }).code);
   }
   copyDir(path.join(THEME, 'static'), OUT);
-  for (const f of ['CNAME']) if (exists(f)) copyFileIfChanged(path.join(ROOT, f), path.join(OUT, f));
+  // The custom domain belongs to the production site: not copied when building for a sub-folder
+  if (!BASE) for (const f of ['CNAME']) if (exists(f)) copyFileIfChanged(path.join(ROOT, f), path.join(OUT, f));
 
   // Remove files left over from earlier builds (renamed pages, deleted images).
   pruneOut();

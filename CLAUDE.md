@@ -81,6 +81,7 @@ npm run bench -- http://localhost:4000/ label   # frame rate of the home panels 
 
 ## Build-specific behaviour
 
+- **Sub-folder builds (GitHub Pages on the WhisperDealer fork, `main` branch only):** `TAF_BASEURL=/TheAstralForge` and `TAF_URL=https://whisperdealer.github.io` override `baseurl` / `url` from `_config.yml`; `withBase()` in `build.mjs` prefixes every root-relative `href` / `src` / `srcset` / `data-*` link (content writes `/assets/...` directly), `CNAME` is not copied, `check-site.mjs` strips the prefix, and `site.js` reads the base from the stylesheet link for its fetches. `pages.yml` gets both values from `actions/configure-pages`. In Git Bash, set `MSYS_NO_PATHCONV=1` before passing `TAF_BASEURL` or Bash turns it into a Windows path. The `fork` branch carries none of this: it is the branch for pull requests to `Alaxouche/TheAstralForge`, whose site deploys from the domain root.
 - Layout mapping (`layoutFor`): `skyground_home` → home, `page` → page, everything else → doc.
 - kramdown is emulated: `markdown="1"` is removed (CommonMark handles HTML blocks itself), and `{: .note }` / `{: .warning }` etc. become `.callout callout-*` (on the paragraph or the following blockquote).
 - Heading ids are slugified with de-duplication. The `# h1` in the content is **hidden by CSS**; the doc layout shows its own title.
