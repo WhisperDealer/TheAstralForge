@@ -13,7 +13,7 @@ import crypto from 'node:crypto';
 import { fileURLToPath } from 'node:url';
 import { Liquid } from 'liquidjs';
 import { Marked } from 'marked';
-import yaml from 'js-yaml';
+import * as yaml from 'js-yaml';
 import { transformSync } from 'esbuild';
 import { keymapHtml, gaugeHtml, cpPerksHtml, sfSkillsHtml } from './visuals.mjs';
 import { contentsMapHtml, contentsJson, estimatorHtml, authorsModel, authorsJson, authorsWallHtml, fmtInt } from './contents.mjs';
